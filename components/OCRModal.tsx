@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Check, RefreshCw, FileText, AlertCircle } from 'lucide-react';
+import { Upload, Check, RefreshCw, FileText, AlertCircle, Camera } from 'lucide-react';
 import { processImageFile } from '../services/ocrService';
 import { OCRResult } from '../types';
 
@@ -35,7 +35,7 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
       const data = await processImageFile(file);
       setResult(data);
     } catch (err) {
-      setError("Failed to extract text. Please try a clearer image.");
+      setError("Failed to extract text. Please ensure the image is clear and try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -45,27 +45,31 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex overflow-hidden flex-col md:flex-row">
         
         {/* Left: Upload/Preview */}
-        <div className="w-1/2 bg-slate-50 p-6 flex flex-col border-r border-gray-200">
+        <div className="w-full md:w-1/2 bg-slate-50 p-6 flex flex-col border-r border-gray-200">
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <Upload size={20} className="text-blue-600" />
-            Upload Enrollment Form
+            <Camera size={20} className="text-blue-600" />
+            Smart Scan
           </h3>
           
-          <div className="flex-1 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center relative overflow-hidden bg-white">
+          <div className="flex-1 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center relative overflow-hidden bg-white hover:bg-slate-50 transition-colors group">
             {preview ? (
               <img src={preview} alt="Preview" className="w-full h-full object-contain" />
             ) : (
               <div className="text-center p-6">
-                <p className="text-gray-400 mb-2">Click to upload or drag & drop</p>
-                <p className="text-xs text-gray-300">Supported: JPG, PNG</p>
+                <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <Camera size={24} />
+                </div>
+                <p className="text-gray-600 font-medium mb-1">Tap to Take Photo</p>
+                <p className="text-xs text-gray-400">or upload a file</p>
               </div>
             )}
             <input 
               type="file" 
-              accept="image/*" 
+              accept="image/*"
+              capture="environment" // Launches back camera on mobile directly
               className="absolute inset-0 opacity-0 cursor-pointer"
               onChange={handleFileChange} 
             />
@@ -76,10 +80,10 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
              <button 
                 onClick={handleProcess}
                 disabled={!file || isProcessing}
-                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2 transition-all"
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex justify-center items-center gap-2 transition-all shadow-blue-200 shadow-lg"
              >
                 {isProcessing ? (
-                   <><RefreshCw className="animate-spin" size={18} /> AI Scanning...</>
+                   <><RefreshCw className="animate-spin" size={18} /> Scanning Form...</>
                 ) : (
                    <><FileText size={18} /> Extract Data</>
                 )}
@@ -88,16 +92,17 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
         </div>
 
         {/* Right: Results/Verification */}
-        <div className="w-1/2 p-6 flex flex-col bg-white overflow-y-auto">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">AI Verification</h3>
+        <div className="w-full md:w-1/2 p-6 flex flex-col bg-white overflow-y-auto">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Verification</h3>
           
           {result ? (
             <div className="flex-1 flex flex-col space-y-4">
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                  <Check size={16} /> Data Detected
-                </h4>
-                <p className="text-xs text-blue-600">Please verify the extracted information matches the form.</p>
+              <div className="p-3 bg-green-50 rounded-lg border border-green-100 flex items-start gap-3">
+                <Check size={18} className="text-green-600 mt-0.5" />
+                <div>
+                    <h4 className="text-sm font-semibold text-green-800">Scan Complete</h4>
+                    <p className="text-xs text-green-600">Confidence: {Math.round(result.confidence * 100)}%</p>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -160,7 +165,7 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
                     onClick={() => onConfirm(result)}
                     className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 shadow-lg shadow-green-900/10 font-medium"
                  >
-                    Confirm & Populate Form
+                    Confirm Data
                  </button>
               </div>
             </div>
@@ -176,7 +181,7 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
                   <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-4">
                      <FileText size={32} className="text-slate-200" />
                   </div>
-                  <p className="max-w-xs text-sm">Upload a form and click "Extract Data" to see the magic happen.</p>
+                  <p className="max-w-xs text-sm">Upload a form or take a picture to automatically fill the fields.</p>
                  </>
               )}
             </div>
