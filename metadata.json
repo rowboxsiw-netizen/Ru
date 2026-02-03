@@ -1,0 +1,7 @@
+{
+  "name": "NexAdmin EMS",
+  "description": "High-fidelity Employee Management System bridging digital and offline workflows with AI-powered OCR.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
