@@ -135,7 +135,7 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase">Salary ($)</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Salary (₹)</label>
                     <input 
                       type="number"
                       value={result.salary} 

@@ -21,15 +21,15 @@ export const extractDataFromImage = async (base64Data: string, mimeType: string)
             }
           },
           {
-            text: `Analyze this Employee Enrollment Form image and extract the following employee details into a strict JSON format.
+            text: `Analyze this Employee Enrollment Form image (India context) and extract the following details into a strict JSON format.
             
             Fields to Extract:
             1. Full Name (Look for "Full Name" block)
             2. Email Address (Look for "Email Address" block)
             3. Department (Look for "Department" block)
             4. Job Role / Title (Look for "Designation" or "Job Role" block)
-            5. Annual Salary (Look for "Annual Salary", return number only, no symbols)
-            6. Join Date (Look for "Join Date", convert to YYYY-MM-DD ISO format)
+            5. Annual Salary (Look for "Annual Salary" or "CTC", return number only. Ignore symbols like ₹, Rs, INR)
+            6. Join Date (Look for "Join Date", convert to YYYY-MM-DD ISO format for database, even if written as DD/MM/YYYY)
 
             If a field is empty, handwritten illegibly, or missing, use reasonable defaults or empty strings.
             `

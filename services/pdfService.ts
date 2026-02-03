@@ -14,7 +14,7 @@ export const generateOfflineForm = () => {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
   doc.setTextColor(80);
-  doc.text('Nexus Systems Inc. - HR Department', 105, 28, { align: 'center' });
+  doc.text('Nexus Systems Pvt. Ltd. - HR Department', 105, 28, { align: 'center' });
 
   // -- Instructions --
   doc.setFontSize(10);
@@ -52,12 +52,12 @@ export const generateOfflineForm = () => {
   drawField('Job Role / Title:', currentY);
   currentY += gap;
 
-  // 5. Annual Salary ($)
-  drawField('Annual Salary ($):', currentY);
+  // 5. Annual Salary
+  drawField('Annual Salary (Rs.):', currentY);
   currentY += gap;
 
-  // 6. Join Date (YYYY-MM-DD)
-  drawField('Join Date (YYYY-MM-DD):', currentY);
+  // 6. Join Date
+  drawField('Join Date (DD-MM-YYYY):', currentY);
   currentY += gap + 10;
 
   // -- Footer Signature Section --
@@ -76,12 +76,12 @@ export const generateOfflineForm = () => {
   doc.setTextColor(150);
   doc.text('FOR OFFICE USE ONLY: SCAN THIS DOCUMENT TO AUTO-FILL PORTAL FIELDS', 105, 280, { align: 'center' });
 
-  doc.save('Nexus_Enrollment_Form.pdf');
+  doc.save('Nexus_Enrollment_Form_India.pdf');
 };
 
 export const generateMasterReport = (employees: Employee[]) => {
   const doc = new jsPDF();
-  const dateStr = format(new Date(), 'MMM dd, yyyy');
+  const dateStr = format(new Date(), 'dd-MM-yyyy');
 
   // Title
   doc.setFontSize(18);
@@ -113,7 +113,7 @@ export const generateMasterReport = (employees: Employee[]) => {
   });
 
   // Table
-  const tableColumn = ["ID", "Name", "Department", "Role", "Email", "Join Date", "Salary"];
+  const tableColumn = ["ID", "Name", "Department", "Role", "Email", "Join Date", "Salary (Rs)"];
   const tableRows: any[] = [];
 
   employees.forEach(emp => {
@@ -123,8 +123,8 @@ export const generateMasterReport = (employees: Employee[]) => {
       emp.department,
       emp.designation,
       emp.email,
-      format(new Date(emp.joinDate), 'yyyy-MM-dd'),
-      `$${emp.salary.toLocaleString()}`
+      format(new Date(emp.joinDate), 'dd-MM-yyyy'),
+      `Rs. ${emp.salary.toLocaleString('en-IN')}`
     ];
     tableRows.push(empData);
   });
@@ -139,5 +139,5 @@ export const generateMasterReport = (employees: Employee[]) => {
     styles: { fontSize: 8, cellPadding: 3 },
   });
 
-  doc.save(`Master_Report_${format(new Date(), 'yyyyMMdd')}.pdf`);
+  doc.save(`Master_Report_${format(new Date(), 'ddMMyyyy')}.pdf`);
 };

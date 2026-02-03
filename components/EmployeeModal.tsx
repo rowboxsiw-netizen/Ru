@@ -56,7 +56,7 @@ const EmployeeModal: React.FC<Props> = ({ isOpen, onClose, onSave, initialData, 
             employeeId: `EMP-${Math.floor(Math.random() * 10000)}`,
             department: Department.ENGINEERING,
             designation: '',
-            salary: 50000,
+            salary: 500000, // Default 5 Lakhs
             joinDate: new Date().toISOString().split('T')[0],
         });
     }
@@ -112,7 +112,7 @@ const EmployeeModal: React.FC<Props> = ({ isOpen, onClose, onSave, initialData, 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Salary ($)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Salary (₹)</label>
               <input {...register('salary')} type="number" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
               {errors.salary && <span className="text-red-500 text-xs">{errors.salary.message}</span>}
             </div>

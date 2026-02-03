@@ -112,6 +112,15 @@ const Dashboard: React.FC<Props> = ({ employees, loading }) => {
     setIsEmpModalOpen(true);
   };
 
+  // Helper for Indian Currency Formatting
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
@@ -169,10 +178,10 @@ const Dashboard: React.FC<Props> = ({ employees, loading }) => {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-slate-500">Avg. Salary</p>
-                        <h3 className="text-2xl font-bold text-slate-800 mt-1">${stats.avgSalary.toLocaleString()}</h3>
+                        <h3 className="text-2xl font-bold text-slate-800 mt-1">{formatCurrency(stats.avgSalary)}</h3>
                     </div>
                     <div className="bg-green-50 p-3 rounded-lg text-green-600">
-                        <DollarSign size={24} />
+                        <span className="text-2xl font-bold">₹</span>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
@@ -275,7 +284,7 @@ const Dashboard: React.FC<Props> = ({ employees, loading }) => {
                       </div>
                     </td>
                     <td className="p-4 text-slate-900 font-medium text-sm">
-                      ${emp.salary.toLocaleString()}
+                      {formatCurrency(emp.salary)}
                     </td>
                     <td className="p-4 text-right">
                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
