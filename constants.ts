@@ -1,6 +1,4 @@
-// In a real production app, these would be process.env variables.
-// Using provided configuration strictly as requested.
-
+// Firebase Configuration
 export const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAl1JX9sszHydIx2yaGFaA-7TRqXnTaOBk",
   authDomain: "studio-6485629284-94d34.firebaseapp.com",
@@ -13,14 +11,13 @@ export const FIREBASE_CONFIG = {
 
 export const GEMINI_API_KEY = "AIzaSyCxl7R8CClzoqwl3iWL_Jmz8r442Vzctzc";
 
-// Fallback image if none provided
-export const DEFAULT_AVATAR = "https://picsum.photos/200";
+export const DEFAULT_PRODUCT_IMG = "https://placehold.co/200x200/e2e8f0/64748b?text=Product";
 
-export const DEPARTMENTS = [
-  'Engineering',
-  'Human Resources',
-  'Sales',
-  'Marketing',
-  'Finance',
-  'Operations'
+export const CATEGORIES = [
+  'Electronics',
+  'Furniture',
+  'Groceries',
+  'Clothing',
+  'Hardware',
+  'Pharma'
 ];

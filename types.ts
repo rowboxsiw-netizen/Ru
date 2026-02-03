@@ -1,32 +1,32 @@
-export interface Employee {
+export interface Product {
   id?: string;
-  fullName: string;
-  email: string;
-  employeeId: string;
-  department: Department;
-  designation: string;
-  salary: number;
-  joinDate: string; // ISO Date string
-  profileImage?: string;
-  createdAt?: any; // Firestore Timestamp
+  name: string;
+  sku: string; // Stock Keeping Unit
+  category: Category;
+  supplier: string;
+  price: number; // Unit Price
+  quantity: number; // Stock Level
+  lastRestocked: string; // ISO Date
+  image?: string;
+  createdAt?: any;
 }
 
-export enum Department {
-  ENGINEERING = 'Engineering',
-  HR = 'Human Resources',
-  SALES = 'Sales',
-  MARKETING = 'Marketing',
-  FINANCE = 'Finance',
-  OPERATIONS = 'Operations'
+export enum Category {
+  ELECTRONICS = 'Electronics',
+  FURNITURE = 'Furniture',
+  GROCERIES = 'Groceries',
+  CLOTHING = 'Clothing',
+  HARDWARE = 'Hardware',
+  PHARMA = 'Pharma'
 }
 
 export interface OCRResult {
-  fullName: string;
-  email: string;
-  department: string;
-  designation: string;
-  salary: number;
-  joinDate: string;
+  name: string;
+  sku: string;
+  category: string;
+  supplier: string;
+  price: number;
+  quantity: number;
   confidence: number;
 }
 
@@ -37,6 +37,3 @@ export interface StatCardProps {
   trend?: string;
   color?: string;
 }
-
-export type SortField = 'fullName' | 'department' | 'salary' | 'joinDate';
-export type SortOrder = 'asc' | 'desc';

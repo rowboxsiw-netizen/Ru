@@ -3,24 +3,24 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from './services/firebase';
-import { Employee } from './types';
+import { Product } from './types';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState('dashboard');
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Real-time Firestore Sync
+  // Real-time Firestore Sync (Products Collection)
   useEffect(() => {
-    const q = query(collection(db, 'employees'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const empData: Employee[] = snapshot.docs.map(doc => ({
+      const prodData: Product[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      } as Employee));
+      } as Product));
       
-      setEmployees(empData);
+      setProducts(prodData);
       setLoading(false);
     }, (error) => {
       console.error("Firestore Error:", error);
@@ -33,15 +33,23 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
-      case 'employees':
-        return <Dashboard employees={employees} loading={loading} />;
+      case 'employees': // Mapped to Inventory in Sidebar
+        return <Dashboard employees={products} loading={loading} />;
+      case 'orders':
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                <div className="bg-white p-12 rounded-2xl shadow-sm border text-center">
+                    <h2 className="text-xl font-bold text-slate-700 mb-2">Order Management</h2>
+                    <p className="mb-6">Purchase Orders and Sales processing module.</p>
+                </div>
+            </div>
+        );
       case 'reports':
         return (
             <div className="flex flex-col items-center justify-center h-full text-slate-400">
                 <div className="bg-white p-12 rounded-2xl shadow-sm border text-center">
-                    <h2 className="text-xl font-bold text-slate-700 mb-2">Reports Center</h2>
-                    <p className="mb-6">Advanced analytics modules are coming soon.</p>
-                    <button onClick={() => setCurrentView('dashboard')} className="text-blue-600 hover:underline">Return to Dashboard</button>
+                    <h2 className="text-xl font-bold text-slate-700 mb-2">Analytics</h2>
+                    <p className="mb-6">Sales trends and inventory turnover reports.</p>
                 </div>
             </div>
         );
@@ -49,13 +57,13 @@ const App: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center h-full text-slate-400">
                 <div className="bg-white p-12 rounded-2xl shadow-sm border text-center">
-                    <h2 className="text-xl font-bold text-slate-700 mb-2">System Settings</h2>
-                    <p>Configuration options are restricted to admin users.</p>
+                    <h2 className="text-xl font-bold text-slate-700 mb-2">Warehouse Settings</h2>
+                    <p>Configure warehouse locations and users.</p>
                 </div>
             </div>
         );
       default:
-        return <Dashboard employees={employees} loading={loading} />;
+        return <Dashboard employees={products} loading={loading} />;
     }
   };
 

@@ -1,10 +1,11 @@
 import React from 'react';
 import { 
-  Users, 
+  Package, 
   FileText, 
   Settings, 
   LayoutDashboard, 
-  LogOut 
+  LogOut,
+  Truck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -15,7 +16,8 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'employees', label: 'Employees', icon: Users },
+    { id: 'employees', label: 'Inventory', icon: Package }, // ID kept as employees to match App.tsx switch case
+    { id: 'orders', label: 'Orders', icon: Truck },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -23,8 +25,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
   return (
     <div className="w-64 bg-slate-900 text-white flex flex-col h-full sticky top-0">
       <div className="p-6 border-b border-slate-800">
-        <h1 className="text-2xl font-bold tracking-tight text-blue-400">NexAdmin</h1>
-        <p className="text-xs text-slate-400 mt-1">Enterprise EMS</p>
+        <h1 className="text-2xl font-bold tracking-tight text-indigo-400">NexStock</h1>
+        <p className="text-xs text-slate-400 mt-1">Inventory Management</p>
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
@@ -37,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
               onClick={() => setView(item.id)}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
                 isActive 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' 
                   : 'text-slate-400 hover:bg-slate-800 hover:text-white'
               }`}
             >

@@ -1,331 +1,222 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Search, 
-  Download, 
-  Plus, 
-  Filter, 
-  MoreVertical, 
-  Upload,
-  Users,
-  DollarSign,
-  Briefcase
+  Search, Download, Plus, Filter, Upload, 
+  Package, DollarSign, AlertTriangle, Tag 
 } from 'lucide-react';
-import { Employee, OCRResult } from '../types';
+import { Product, OCRResult } from '../types';
 import { generateOfflineForm, generateMasterReport } from '../services/pdfService';
 import { SkeletonRow, SkeletonCard } from './Skeleton';
-import { DEFAULT_AVATAR } from '../constants';
-import EmployeeModal from './EmployeeModal';
+import { DEFAULT_PRODUCT_IMG } from '../constants';
+import InventoryModal from './EmployeeModal'; // Reusing file path for Inventory Modal
 import OCRModal from './OCRModal';
 import { addDoc, collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 interface Props {
-  employees: Employee[];
+  employees: Product[]; // Mapping 'employees' prop to Product type for compatibility
   loading: boolean;
 }
 
-const Dashboard: React.FC<Props> = ({ employees, loading }) => {
+const Dashboard: React.FC<Props> = ({ employees: products, loading }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDept, setFilterDept] = useState('All');
+  const [filterCat, setFilterCat] = useState('All');
   
-  // Modals
-  const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOCRModalOpen, setIsOCRModalOpen] = useState(false);
-  const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  
-  // OCR Pre-fill Data
-  const [prefillData, setPrefillData] = useState<Partial<Employee> | null>(null);
 
-  // Stats
+  // Stats Calculation
   const stats = useMemo(() => {
-    const total = employees.length;
-    const salary = employees.reduce((acc, curr) => acc + curr.salary, 0);
-    const engineering = employees.filter(e => e.department === 'Engineering').length;
-    return {
-      total,
-      avgSalary: total ? Math.round(salary / total) : 0,
-      engineering
-    };
-  }, [employees]);
+    const totalItems = products.length;
+    const totalValue = products.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
+    const lowStock = products.filter(p => p.quantity < 10).length;
+    return { totalItems, totalValue, lowStock };
+  }, [products]);
 
-  // Filter Logic
-  const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          emp.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterDept === 'All' || emp.department === filterDept;
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterCat === 'All' || p.category === filterCat;
     return matchesSearch && matchesFilter;
   });
 
-  const handleSaveEmployee = async (data: any) => {
+  const handleSaveProduct = async (data: any) => {
     setIsSaving(true);
     try {
-      if (editingEmp && editingEmp.id) {
-        await updateDoc(doc(db, 'employees', editingEmp.id), data);
+      if (editingProduct && editingProduct.id) {
+        await updateDoc(doc(db, 'products', editingProduct.id), data);
       } else {
-        await addDoc(collection(db, 'employees'), {
+        await addDoc(collection(db, 'products'), {
             ...data,
             createdAt: new Date(),
-            profileImage: DEFAULT_AVATAR
+            image: DEFAULT_PRODUCT_IMG
         });
       }
-      setIsEmpModalOpen(false);
-      setEditingEmp(null);
-      setPrefillData(null);
+      setIsModalOpen(false);
+      setEditingProduct(null);
     } catch (error) {
       console.error("Error saving:", error);
-      alert("Failed to save employee.");
+      alert("Failed to save product.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleEdit = (emp: Employee) => {
-    setEditingEmp(emp);
-    setIsEmpModalOpen(true);
-  };
-
   const handleDelete = async (id?: string) => {
     if(!id) return;
-    if(confirm("Are you sure you want to delete this employee?")) {
-        await deleteDoc(doc(db, 'employees', id));
+    if(confirm("Delete this product from inventory?")) {
+        await deleteDoc(doc(db, 'products', id));
     }
   }
 
   const handleOCRConfirm = (data: OCRResult) => {
     setIsOCRModalOpen(false);
-    
-    // Automatically generate an Employee ID
-    const autoId = `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
-
     const placeholder: any = {
-        fullName: data.fullName,
-        email: data.email || '',
-        department: data.department,
-        designation: data.designation,
-        employeeId: autoId, // Auto-generated ID
-        salary: data.salary || 0,
-        joinDate: data.joinDate || new Date().toISOString().split('T')[0]
+        name: data.name,
+        sku: data.sku || `SKU-${Date.now().toString().slice(-4)}`,
+        category: data.category,
+        supplier: data.supplier,
+        price: data.price || 0,
+        quantity: data.quantity || 1,
+        lastRestocked: new Date().toISOString().split('T')[0]
     };
-    
-    setEditingEmp(placeholder);
-    setIsEmpModalOpen(true);
+    setEditingProduct(placeholder);
+    setIsModalOpen(true);
   };
 
-  // Helper for Indian Currency Formatting
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  const formatCurrency = (val: number) => 
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-800">Overview</h2>
-          <p className="text-slate-500 mt-1">Manage your team and enrollment.</p>
+          <h2 className="text-3xl font-bold text-slate-800">Inventory</h2>
+          <p className="text-slate-500 mt-1">Track stock levels and value.</p>
         </div>
         <div className="flex gap-3">
-          <button 
-            onClick={generateOfflineForm}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-          >
-            <Download size={18} />
-            <span className="hidden sm:inline">Template</span>
+          <button onClick={generateOfflineForm} className="btn-secondary flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50">
+            <Download size={18} /> <span className="hidden sm:inline">Stock Form</span>
           </button>
-          
-          <button 
-            onClick={() => setIsOCRModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            <Upload size={18} />
-            <span className="hidden sm:inline">Smart Scan</span>
+          <button onClick={() => setIsOCRModalOpen(true)} className="btn-primary flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+            <Upload size={18} /> <span className="hidden sm:inline">Scan Stock</span>
           </button>
-
-          <button 
-            onClick={() => { setEditingEmp(null); setIsEmpModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-blue-200 shadow-lg"
-          >
-            <Plus size={18} />
-            <span>Add Employee</span>
+          <button onClick={() => { setEditingProduct(null); setIsModalOpen(true); }} className="btn-primary flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg shadow-blue-200">
+            <Plus size={18} /> <span>Add Product</span>
           </button>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-         {loading ? (
-             <>
-                <SkeletonCard />
-                <SkeletonCard />
-                <SkeletonCard />
-             </>
-         ) : (
+         {loading ? <SkeletonCard /> : (
             <>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div className="stat-card bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center">
                     <div>
-                        <p className="text-sm font-medium text-slate-500">Total Employees</p>
-                        <h3 className="text-2xl font-bold text-slate-800 mt-1">{stats.total}</h3>
+                        <p className="text-slate-500 text-sm font-medium">Total Inventory Value</p>
+                        <h3 className="text-2xl font-bold text-slate-800 mt-1">{formatCurrency(stats.totalValue)}</h3>
                     </div>
-                    <div className="bg-blue-50 p-3 rounded-lg text-blue-600">
-                        <Users size={24} />
-                    </div>
+                    <div className="p-3 bg-green-50 text-green-600 rounded-lg"><DollarSign size={24} /></div>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div className="stat-card bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center">
                     <div>
-                        <p className="text-sm font-medium text-slate-500">Avg. Salary</p>
-                        <h3 className="text-2xl font-bold text-slate-800 mt-1">{formatCurrency(stats.avgSalary)}</h3>
+                        <p className="text-slate-500 text-sm font-medium">Unique Products</p>
+                        <h3 className="text-2xl font-bold text-slate-800 mt-1">{stats.totalItems}</h3>
                     </div>
-                    <div className="bg-green-50 p-3 rounded-lg text-green-600">
-                        <span className="text-2xl font-bold">₹</span>
-                    </div>
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><Package size={24} /></div>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div className="stat-card bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex justify-between items-center">
                     <div>
-                        <p className="text-sm font-medium text-slate-500">Engineering Dept</p>
-                        <h3 className="text-2xl font-bold text-slate-800 mt-1">{stats.engineering}</h3>
+                        <p className="text-slate-500 text-sm font-medium">Low Stock Alerts</p>
+                        <h3 className="text-2xl font-bold text-slate-800 mt-1">{stats.lowStock}</h3>
                     </div>
-                    <div className="bg-purple-50 p-3 rounded-lg text-purple-600">
-                        <Briefcase size={24} />
-                    </div>
+                    <div className="p-3 bg-orange-50 text-orange-600 rounded-lg"><AlertTriangle size={24} /></div>
                 </div>
             </>
          )}
       </div>
 
-      {/* Main Table Section */}
+      {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        {/* Table Toolbar */}
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between gap-4">
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between">
           <div className="relative w-full sm:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
-              type="text" 
-              placeholder="Search by name, email or ID..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-700"
+              type="text" placeholder="Search products, SKU..." 
+              value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex gap-2">
-            <div className="relative">
-                <select 
-                    value={filterDept}
-                    onChange={(e) => setFilterDept(e.target.value)}
-                    className="appearance-none pl-10 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 focus:border-blue-500 outline-none cursor-pointer"
-                >
-                    <option value="All">All Departments</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Sales">Sales</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Human Resources">HR</option>
-                </select>
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            </div>
-            <button 
-                onClick={() => generateMasterReport(employees)}
-                className="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50"
-            >
-                Export Report
-            </button>
+             <select 
+                value={filterCat} onChange={e => setFilterCat(e.target.value)}
+                className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-600 outline-none focus:border-blue-500"
+             >
+                <option value="All">All Categories</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Groceries">Groceries</option>
+                <option value="Furniture">Furniture</option>
+                <option value="Clothing">Clothing</option>
+             </select>
+             <button onClick={() => generateMasterReport(products)} className="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">Export</button>
           </div>
         </div>
 
-        {/* Table Content */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
-                <th className="p-4">Employee</th>
-                <th className="p-4">Department</th>
-                <th className="p-4">Designation</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Salary</th>
+              <tr className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
+                <th className="p-4">Product</th>
+                <th className="p-4">Category</th>
+                <th className="p-4">Price</th>
+                <th className="p-4">Stock</th>
+                <th className="p-4">Value</th>
                 <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <>
-                  {[...Array(5)].map((_, i) => (
-                    <tr key={i}><td colSpan={6}><SkeletonRow /></td></tr>
-                  ))}
-                </>
-              ) : filteredEmployees.length > 0 ? (
-                filteredEmployees.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors group">
+              {loading ? [...Array(5)].map((_, i) => <tr key={i}><td colSpan={6}><SkeletonRow /></td></tr>) : 
+               filteredProducts.map(p => (
+                  <tr key={p.id} className="hover:bg-slate-50/50 group transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <img 
-                          src={emp.profileImage || DEFAULT_AVATAR} 
-                          alt="" 
-                          className="w-10 h-10 rounded-full object-cover border border-slate-200"
-                        />
+                        <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center text-slate-400">
+                            <Tag size={20} />
+                        </div>
                         <div>
-                          <div className="font-medium text-slate-900">{emp.fullName}</div>
-                          <div className="text-xs text-slate-500">{emp.email}</div>
+                          <div className="font-medium text-slate-900">{p.name}</div>
+                          <div className="text-xs text-slate-500">SKU: {p.sku}</div>
                         </div>
                       </div>
                     </td>
+                    <td className="p-4"><span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">{p.category}</span></td>
+                    <td className="p-4 text-slate-700">{formatCurrency(p.price)}</td>
                     <td className="p-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                        {emp.department}
-                      </span>
+                        <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${p.quantity < 10 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${p.quantity < 10 ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                            {p.quantity} Units
+                        </div>
                     </td>
-                    <td className="p-4 text-slate-600 text-sm">{emp.designation}</td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                        <span className="text-xs text-slate-600">Active</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-slate-900 font-medium text-sm">
-                      {formatCurrency(emp.salary)}
-                    </td>
+                    <td className="p-4 font-medium text-slate-900">{formatCurrency(p.price * p.quantity)}</td>
                     <td className="p-4 text-right">
-                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => handleEdit(emp)} className="text-blue-600 hover:underline text-sm font-medium">Edit</button>
-                            <button onClick={() => handleDelete(emp.id)} className="text-red-500 hover:underline text-sm font-medium">Delete</button>
-                       </div>
+                        <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="text-blue-600 text-sm hover:underline mr-3">Edit</button>
+                        <button onClick={() => handleDelete(p.id)} className="text-red-500 text-sm hover:underline">Delete</button>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="p-12 text-center text-slate-400">
-                    No employees found matching your filters.
-                  </td>
-                </tr>
-              )}
+               ))}
             </tbody>
           </table>
         </div>
-        
-        {/* Pagination (Visual Only for UI completeness in this scope) */}
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
-            <span>Showing 1 to {filteredEmployees.length} of {employees.length} results</span>
-            <div className="flex gap-2">
-                <button disabled className="px-3 py-1 border rounded disabled:opacity-50">Previous</button>
-                <button disabled className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
-            </div>
-        </div>
       </div>
 
-      <EmployeeModal 
-        isOpen={isEmpModalOpen} 
-        onClose={() => setIsEmpModalOpen(false)} 
-        onSave={handleSaveEmployee}
-        initialData={editingEmp}
-        isSaving={isSaving}
+      <InventoryModal 
+        isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveProduct} initialData={editingProduct} isSaving={isSaving}
       />
-      
       <OCRModal 
-        isOpen={isOCRModalOpen} 
-        onClose={() => setIsOCRModalOpen(false)}
+        isOpen={isOCRModalOpen} onClose={() => setIsOCRModalOpen(false)}
         onConfirm={handleOCRConfirm}
       />
     </div>

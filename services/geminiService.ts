@@ -4,28 +4,22 @@ import { OCRResult } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-/**
- * Uses Gemini 2.0 Flash (Multimodal) to extract data directly from an image.
- * This model has superior vision capabilities for handwritten forms.
- */
 export const extractDataFromImage = async (base64Data: string, mimeType: string): Promise<OCRResult> => {
   try {
-    // 1. Configure the model - using 2.0 Flash for best speed/accuracy balance in Vision
     const modelId = "gemini-2.0-flash-exp"; 
     
-    // 2. Define the extraction schema strictly
     const responseSchema = {
       type: Type.OBJECT,
       properties: {
-        fullName: { type: Type.STRING },
-        email: { type: Type.STRING },
-        department: { type: Type.STRING },
-        designation: { type: Type.STRING },
-        salary: { type: Type.NUMBER },
-        joinDate: { type: Type.STRING },
-        confidence: { type: Type.NUMBER, description: "Confidence score 0-1 based on legibility" }
+        name: { type: Type.STRING },
+        sku: { type: Type.STRING },
+        category: { type: Type.STRING },
+        supplier: { type: Type.STRING },
+        price: { type: Type.NUMBER },
+        quantity: { type: Type.NUMBER },
+        confidence: { type: Type.NUMBER }
       },
-      required: ["fullName", "email", "department", "designation", "salary", "joinDate"]
+      required: ["name", "sku", "category", "price", "quantity"]
     };
 
     const response = await ai.models.generateContent({
@@ -39,20 +33,19 @@ export const extractDataFromImage = async (base64Data: string, mimeType: string)
             }
           },
           {
-            text: `You are an advanced OCR AI for Indian HR documents. Analyze this Employee Enrollment Form image.
+            text: `You are an intelligent Inventory Scanner for an Indian Warehouse. Analyze this Product Label, Invoice, or Stock Sheet.
             
-            Extract the following fields into strict JSON:
-            1. **Full Name**: Look for "Full Name".
-            2. **Email**: Look for "Email Address".
-            3. **Department**: Look for "Department".
-            4. **Role**: Look for "Job Role" or "Designation".
-            5. **Salary**: Look for "Annual Salary" or "CTC". Return only the number (e.g., 500000). Remove currency symbols like ₹, Rs, INR, or commas.
-            6. **Join Date**: Look for "Join Date". Convert ANY date format found (e.g., "12th Jan 2024", "12/01/2024") into strict ISO format "YYYY-MM-DD".
+            Extract the following into strict JSON:
+            1. **Product Name**: The main label or description.
+            2. **SKU**: Look for "SKU", "Item Code", "Model No", or Barcode numbers.
+            3. **Category**: Infer from the product name (e.g., Laptop -> Electronics, Chair -> Furniture).
+            4. **Supplier**: Look for "Mfr", "Vendor", or "Sold By".
+            5. **Price**: Look for "MRP", "Price", or "Rate". Return numeric value only (remove ₹/Rs).
+            6. **Quantity**: Look for "Qty", "Count", or "Net Weight". If not found, default to 1.
 
             **Rules**:
-            - If handwritten text is ambiguous, infer from context.
-            - If a field is completely missing or illegible, return "Unknown" (string) or 0 (number).
-            - Do not return Markdown code blocks, just the JSON object.
+            - Infer category from standard list: Electronics, Furniture, Groceries, Clothing, Hardware, Pharma.
+            - If SKU is missing, generate a short one based on Name (e.g., "LAP-001").
             `
           }
         ]
@@ -60,12 +53,11 @@ export const extractDataFromImage = async (base64Data: string, mimeType: string)
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        temperature: 0.1, // Low temperature for factual extraction
+        temperature: 0.1,
       }
     });
 
     if (response.text) {
-      // 3. Robust Parsing: Strip Markdown code blocks if present (common Gemini behavior)
       const cleanJson = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(cleanJson) as OCRResult;
     }
@@ -73,14 +65,13 @@ export const extractDataFromImage = async (base64Data: string, mimeType: string)
     throw new Error("No extracted text returned from AI");
   } catch (error) {
     console.error("Gemini Vision Error:", error);
-    // Return empty fallback with low confidence
     return {
-      fullName: "",
-      email: "",
-      department: "",
-      designation: "",
-      salary: 0,
-      joinDate: new Date().toISOString().split('T')[0],
+      name: "",
+      sku: "",
+      category: "Electronics",
+      supplier: "",
+      price: 0,
+      quantity: 1,
       confidence: 0
     };
   }

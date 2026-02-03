@@ -3,17 +3,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { X, Save } from 'lucide-react';
-import { Employee, Department } from '../types';
-import { DEPARTMENTS } from '../constants';
+import { Product, Category } from '../types';
 
 const schema = z.object({
-  fullName: z.string().min(2, "Name is required"),
-  email: z.string().email("Invalid email"),
-  employeeId: z.string().min(3, "ID required"),
-  department: z.nativeEnum(Department),
-  designation: z.string().min(2, "Role required"),
-  salary: z.coerce.number().min(1, "Salary must be positive"),
-  joinDate: z.string().min(1, "Date required"),
+  name: z.string().min(2, "Product name required"),
+  sku: z.string().min(2, "SKU required"),
+  category: z.nativeEnum(Category),
+  supplier: z.string().optional(),
+  price: z.coerce.number().min(0, "Price must be positive"),
+  quantity: z.coerce.number().min(0, "Quantity cannot be negative"),
+  lastRestocked: z.string().min(1, "Date required"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -22,45 +21,35 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: FormData) => void;
-  initialData?: Employee | null;
+  initialData?: Product | null;
   isSaving: boolean;
 }
 
-const EmployeeModal: React.FC<Props> = ({ isOpen, onClose, onSave, initialData, isSaving }) => {
+const InventoryModal: React.FC<Props> = ({ isOpen, onClose, onSave, initialData, isSaving }) => {
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      fullName: '',
-      email: '',
-      employeeId: '',
-      department: Department.ENGINEERING,
-      designation: '',
-      salary: 0,
-      joinDate: new Date().toISOString().split('T')[0],
+      name: '', sku: '', category: Category.ELECTRONICS, supplier: '',
+      price: 0, quantity: 0, lastRestocked: new Date().toISOString().split('T')[0]
     }
   });
 
   React.useEffect(() => {
     if (initialData) {
-      setValue('fullName', initialData.fullName);
-      setValue('email', initialData.email);
-      setValue('employeeId', initialData.employeeId);
-      setValue('department', initialData.department);
-      setValue('designation', initialData.designation);
-      setValue('salary', initialData.salary);
-      setValue('joinDate', initialData.joinDate);
+      setValue('name', initialData.name);
+      setValue('sku', initialData.sku);
+      setValue('category', initialData.category);
+      setValue('supplier', initialData.supplier || '');
+      setValue('price', initialData.price);
+      setValue('quantity', initialData.quantity);
+      setValue('lastRestocked', initialData.lastRestocked);
     } else {
         reset({
-            fullName: '',
-            email: '',
-            employeeId: `EMP-${Math.floor(Math.random() * 10000)}`,
-            department: Department.ENGINEERING,
-            designation: '',
-            salary: 500000, // Default 5 Lakhs
-            joinDate: new Date().toISOString().split('T')[0],
+            name: '', sku: '', category: Category.ELECTRONICS,
+            price: 0, quantity: 0, lastRestocked: new Date().toISOString().split('T')[0]
         });
     }
-  }, [initialData, setValue, reset, isOpen]);
+  }, [initialData, isOpen, reset, setValue]);
 
   if (!isOpen) return null;
 
@@ -68,79 +57,70 @@ const EmployeeModal: React.FC<Props> = ({ isOpen, onClose, onSave, initialData, 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800">
-            {initialData ? 'Edit Employee' : 'New Employee'}
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X size={24} />
-          </button>
+          <h2 className="text-xl font-bold text-gray-800">{initialData ? 'Edit Product' : 'New Stock Item'}</h2>
+          <button onClick={onClose}><X size={24} className="text-gray-400" /></button>
         </div>
 
         <form onSubmit={handleSubmit(onSave)} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <input {...register('fullName')} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
-              {errors.fullName && <span className="text-red-500 text-xs">{errors.fullName.message}</span>}
+            <div className="col-span-2">
+              <label className="label">Product Name</label>
+              <input {...register('name')} className="input" placeholder="e.g. Wireless Mouse" />
+              {errors.name && <span className="error">{errors.name.message}</span>}
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
-              <input {...register('employeeId')} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
-              {errors.employeeId && <span className="text-red-500 text-xs">{errors.employeeId.message}</span>}
+              <label className="label">SKU / Barcode</label>
+              <input {...register('sku')} className="input" placeholder="e.g. WM-001" />
+              {errors.sku && <span className="error">{errors.sku.message}</span>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input {...register('email')} type="email" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
-              {errors.email && <span className="text-red-500 text-xs">{errors.email.message}</span>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-              <select {...register('department')} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                {Object.values(Department).map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
+              <label className="label">Category</label>
+              <select {...register('category')} className="input bg-white">
+                {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-              <input {...register('designation')} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
-              {errors.designation && <span className="text-red-500 text-xs">{errors.designation.message}</span>}
+              <label className="label">Price (₹)</label>
+              <input {...register('price')} type="number" className="input" />
+              {errors.price && <span className="error">{errors.price.message}</span>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Salary (₹)</label>
-              <input {...register('salary')} type="number" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
-              {errors.salary && <span className="text-red-500 text-xs">{errors.salary.message}</span>}
+              <label className="label">Quantity</label>
+              <input {...register('quantity')} type="number" className="input" />
+              {errors.quantity && <span className="error">{errors.quantity.message}</span>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Join Date</label>
-              <input {...register('joinDate')} type="date" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
-              {errors.joinDate && <span className="text-red-500 text-xs">{errors.joinDate.message}</span>}
+              <label className="label">Supplier</label>
+              <input {...register('supplier')} className="input" placeholder="e.g. ABC Distributors" />
+            </div>
+
+            <div>
+              <label className="label">Last Restock</label>
+              <input {...register('lastRestocked')} type="date" className="input" />
             </div>
           </div>
 
           <div className="pt-4 flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              disabled={isSaving}
-              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-70"
-            >
-              <Save size={18} />
-              {isSaving ? 'Saving...' : 'Save Employee'}
+            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+            <button type="submit" disabled={isSaving} className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-70">
+              <Save size={18} /> {isSaving ? 'Saving...' : 'Save Product'}
             </button>
           </div>
         </form>
       </div>
+      <style>{`
+        .label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; }
+        .input { width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; outline: none; transition: all; }
+        .input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+        .error { font-size: 0.75rem; color: #ef4444; }
+      `}</style>
     </div>
   );
 };
 
-export default EmployeeModal;
+export default InventoryModal;
