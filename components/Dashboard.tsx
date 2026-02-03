@@ -94,23 +94,21 @@ const Dashboard: React.FC<Props> = ({ employees, loading }) => {
 
   const handleOCRConfirm = (data: OCRResult) => {
     setIsOCRModalOpen(false);
-    // Open the regular modal but pre-filled
-    setEditingEmp(null); // Ensure it's new
     
-    // Map OCR fields loosely to form fields
-    // We intentionally pass this as "initialData" to the modal conceptually
-    // But since Modal uses props, we'll need to trigger it nicely.
-    // Hack: We'll construct a partial object and pass it as editingEmp but without ID
+    // Automatically generate an Employee ID
+    const autoId = `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const placeholder: any = {
         fullName: data.fullName,
+        email: data.email || '',
+        department: data.department,
         designation: data.designation,
-        department: data.department, // might need manual adjustment if not exact enum match
-        email: '',
-        employeeId: '',
-        salary: 0,
-        joinDate: new Date().toISOString().split('T')[0]
+        employeeId: autoId, // Auto-generated ID
+        salary: data.salary || 0,
+        joinDate: data.joinDate || new Date().toISOString().split('T')[0]
     };
-    setEditingEmp(placeholder); // This pre-fills the form
+    
+    setEditingEmp(placeholder);
     setIsEmpModalOpen(true);
   };
 

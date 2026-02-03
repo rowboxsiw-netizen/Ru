@@ -5,56 +5,78 @@ import { Employee } from '../types';
 
 export const generateOfflineForm = () => {
   const doc = new jsPDF();
+  
+  // -- Header --
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.text('Employee Enrollment Form', 105, 20, { align: 'center' });
+  
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  doc.setTextColor(80);
+  doc.text('Nexus Systems Inc. - HR Department', 105, 28, { align: 'center' });
 
-  // Branding
-  doc.setFillColor(30, 58, 138); // Blue 900
-  doc.rect(0, 0, 210, 20, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
-  doc.text('NexAdmin Enrollment Form', 14, 13);
-
-  doc.setTextColor(0, 0, 0);
+  // -- Instructions --
   doc.setFontSize(10);
-  doc.text('Please fill out the form below in clear block letters.', 14, 30);
-  doc.text('This form is optimized for AI Automated Scanning.', 14, 35);
+  doc.setTextColor(0);
+  doc.text('Please fill in the following information clearly in BLOCK LETTERS.', 14, 45);
 
-  // --- Anchor Boxes for OCR Optimization ---
-  // We draw specific rectangles where users should write. 
-  // This helps visual guidance.
+  // -- Form Fields helper --
+  const drawField = (label: string, y: number, width: number = 180) => {
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(label, 14, y);
+    
+    // Draw Box
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.1);
+    doc.rect(14, y + 2, width, 10); // x, y, w, h
+  };
+
+  let currentY = 55;
+  const gap = 20;
 
   // 1. Full Name
-  doc.setFontSize(11);
-  doc.text('Full Name:', 14, 50);
-  doc.setLineWidth(0.5);
-  doc.setDrawColor(150);
-  doc.rect(14, 55, 120, 12); // x, y, w, h
-  doc.setFontSize(8);
-  doc.setTextColor(150);
-  doc.text('(First Name, Last Name)', 16, 62);
+  drawField('Full Name:', currentY);
+  currentY += gap;
 
-  // 2. Designation / Role
-  doc.setTextColor(0);
-  doc.setFontSize(11);
-  doc.text('Designation / Role:', 14, 80);
-  doc.setDrawColor(150);
-  doc.rect(14, 85, 120, 12);
+  // 2. Email Address
+  drawField('Email Address:', currentY);
+  currentY += gap;
 
   // 3. Department
-  doc.text('Department:', 14, 110);
-  doc.rect(14, 115, 80, 12);
+  drawField('Department:', currentY);
+  currentY += gap;
+
+  // 4. Job Role / Title
+  drawField('Job Role / Title:', currentY);
+  currentY += gap;
+
+  // 5. Annual Salary ($)
+  drawField('Annual Salary ($):', currentY);
+  currentY += gap;
+
+  // 6. Join Date (YYYY-MM-DD)
+  drawField('Join Date (YYYY-MM-DD):', currentY);
+  currentY += gap + 10;
+
+  // -- Footer Signature Section --
+  const signatureY = currentY + 10;
   
-  // 4. Employee ID (Optional manual override)
-  doc.text('Employee ID (if assigned):', 110, 110);
-  doc.rect(110, 115, 50, 12);
+  // Signature Line
+  doc.text('Signature:', 14, signatureY + 8);
+  doc.line(35, signatureY + 8, 100, signatureY + 8);
 
-  // Footer Instructions
-  doc.setFontSize(9);
-  doc.setTextColor(100);
-  doc.text('OFFICIAL USE ONLY - DO NOT FOLD', 14, 280);
-  const generatedStr = `Generated: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`;
-  doc.text(generatedStr, 150, 280);
+  // Date Line
+  doc.text('Date:', 120, signatureY + 8);
+  doc.line(135, signatureY + 8, 194, signatureY + 8);
 
-  doc.save('NexAdmin_Enrollment_Template.pdf');
+  // Footer Metadata
+  doc.setFontSize(8);
+  doc.setTextColor(150);
+  doc.text('FOR OFFICE USE ONLY: SCAN THIS DOCUMENT TO AUTO-FILL PORTAL FIELDS', 105, 280, { align: 'center' });
+
+  doc.save('Nexus_Enrollment_Form.pdf');
 };
 
 export const generateMasterReport = (employees: Employee[]) => {

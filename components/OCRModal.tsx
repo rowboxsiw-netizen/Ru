@@ -45,7 +45,7 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex overflow-hidden">
         
         {/* Left: Upload/Preview */}
         <div className="w-1/2 bg-slate-50 p-6 flex flex-col border-r border-gray-200">
@@ -88,7 +88,7 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
         </div>
 
         {/* Right: Results/Verification */}
-        <div className="w-1/2 p-6 flex flex-col bg-white">
+        <div className="w-1/2 p-6 flex flex-col bg-white overflow-y-auto">
           <h3 className="text-lg font-bold text-slate-800 mb-4">AI Verification</h3>
           
           {result ? (
@@ -101,33 +101,61 @@ const OCRModal: React.FC<Props> = ({ isOpen, onClose, onConfirm }) => {
               </div>
 
               <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Full Name</label>
-                  <input 
-                    value={result.fullName} 
-                    onChange={(e) => setResult({...result, fullName: e.target.value})}
-                    className="w-full p-2 border border-gray-200 rounded text-gray-800 focus:border-blue-500 outline-none" 
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Department</label>
-                  <input 
-                    value={result.department} 
-                    onChange={(e) => setResult({...result, department: e.target.value})}
-                    className="w-full p-2 border border-gray-200 rounded text-gray-800 focus:border-blue-500 outline-none" 
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Designation</label>
-                  <input 
-                    value={result.designation} 
-                    onChange={(e) => setResult({...result, designation: e.target.value})}
-                    className="w-full p-2 border border-gray-200 rounded text-gray-800 focus:border-blue-500 outline-none" 
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Full Name</label>
+                    <input 
+                      value={result.fullName} 
+                      onChange={(e) => setResult({...result, fullName: e.target.value})}
+                      className="w-full p-2 border border-gray-200 rounded text-gray-800 focus:border-blue-500 outline-none" 
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Email</label>
+                    <input 
+                      value={result.email} 
+                      onChange={(e) => setResult({...result, email: e.target.value})}
+                      className="w-full p-2 border border-gray-200 rounded text-gray-800 focus:border-blue-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Department</label>
+                    <input 
+                      value={result.department} 
+                      onChange={(e) => setResult({...result, department: e.target.value})}
+                      className="w-full p-2 border border-gray-200 rounded text-gray-800 focus:border-blue-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Designation</label>
+                    <input 
+                      value={result.designation} 
+                      onChange={(e) => setResult({...result, designation: e.target.value})}
+                      className="w-full p-2 border border-gray-200 rounded text-gray-800 focus:border-blue-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Salary ($)</label>
+                    <input 
+                      type="number"
+                      value={result.salary} 
+                      onChange={(e) => setResult({...result, salary: Number(e.target.value)})}
+                      className="w-full p-2 border border-gray-200 rounded text-gray-800 focus:border-blue-500 outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Join Date</label>
+                    <input 
+                      type="date"
+                      value={result.joinDate} 
+                      onChange={(e) => setResult({...result, joinDate: e.target.value})}
+                      className="w-full p-2 border border-gray-200 rounded text-gray-800 focus:border-blue-500 outline-none" 
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-auto">
+              <div className="mt-6">
                  <button 
                     onClick={() => onConfirm(result)}
                     className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 shadow-lg shadow-green-900/10 font-medium"

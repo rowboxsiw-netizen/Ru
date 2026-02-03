@@ -22,8 +22,11 @@ export enum Department {
 
 export interface OCRResult {
   fullName: string;
+  email: string;
   department: string;
   designation: string;
+  salary: number;
+  joinDate: string;
   confidence: number;
 }
 
